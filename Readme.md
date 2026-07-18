@@ -1,66 +1,80 @@
-# 🚀 Oreon
+# Oreon
 
-### A lightweight version control system written entirely in Python.
+**A lightweight Version Control System (VCS) written in Python.**
 
-_Track changes. Create commits. Restore history. Understand version control._
+Oreon is a command-line version control system inspired by Git. It allows you to track changes to your project, create commits, restore previous versions, and work with multiple branches—all through a simple and intuitive CLI.
 
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Version](https://img.shields.io/badge/version-v1.0.0-success?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
+> **Current Version:** 1.0.0
 
 ---
 
-## ✨ Overview
+## Features
 
-**Oreon** is a lightweight command-line version control system built completely from scratch in Python.
-
-It allows you to initialize repositories, create commits, detect project changes, and restore previous versions—all without relying on Git's internal implementation.
-
-The project was created to explore the fundamentals of version control while keeping the implementation simple, readable, and educational.
-
----
-
-## 🌟 Features
-
-- 📦 Initialize repositories
-- 💾 Create commits with optional commit messages
-- 🔍 Detect added, modified, and deleted files
-- ♻️ Restore any previous project state
-- 📁 Preserve directory structure
-- ⚡ Efficient incremental storage of changes
-- 💻 Simple and intuitive command-line interface
+- Initialize repositories
+- Track file additions, modifications, and deletions
+- Create commits with custom messages
+- Restore any previous commit
+- View repository status
+- Display commit history
+- Create and switch between branches
+- Prevent branch switching when uncommitted changes exist
+- Repository information command
+- SHA-256 based change detection
+- Incremental storage for efficient versioning
 
 ---
 
-## 📥 Installation
+## Installation
+
+### From PyPI
 
 ```bash
 pip install oreon
 ```
 
+### Verify Installation
+
+```bash
+oreon --version
+```
+
 ---
 
-## 🚀 Quick Start
+## Getting Started
 
-### Initialize a repository
+### Initialize a Repository
 
 ```bash
 oreon init
 ```
 
-### Create a commit
+---
+
+### Check Repository Status
 
 ```bash
-oreon commit
+oreon status
 ```
 
-### Create a commit with a message
+---
+
+### Create a Commit
 
 ```bash
 oreon commit -m "Initial project setup"
 ```
 
-### Restore a previous commit
+---
+
+### View Commit History
+
+```bash
+oreon show
+```
+
+---
+
+### Restore a Previous Commit
 
 ```bash
 oreon restore
@@ -68,67 +82,123 @@ oreon restore
 
 ---
 
-## 📖 Example Workflow
+### View Repository Information
 
 ```bash
-# Initialize the repository
+oreon info
+```
+
+---
+
+## Branching
+
+### Create a Branch
+
+```bash
+oreon createBranch feature
+```
+
+### Switch Branches
+
+```bash
+oreon changeBranch feature
+```
+
+If uncommitted changes are detected, Oreon prevents switching branches to avoid accidental data loss.
+
+---
+
+## Repository Structure
+
+```text
+project/
+│
+├── .oreon/
+│   ├── commits/
+│   ├── latest/
+│   ├── hashes.json
+│   └── ...
+│
+├── source files...
+```
+
+---
+
+## Design
+
+Unlike Git, Oreon uses an incremental storage approach.
+
+The latest repository state is maintained inside `.oreon/latest`, while each commit stores only the changes introduced in that commit. During restoration, Oreon reconstructs the requested state by starting from the latest snapshot and reversing the required commits.
+
+This approach keeps commits compact while allowing efficient restoration of previous versions.
+
+---
+
+## Notes
+
+- Oreon tracks **files**, not empty directories.
+- Empty folders are not versioned, similar to Git's behavior.
+- Directories are recreated automatically whenever tracked files require them.
+
+---
+
+## Example Workflow
+
+```bash
 oreon init
 
-# First commit
 oreon commit -m "Initial commit"
 
-# Modify files...
+# edit files
 
-# Save changes
-oreon commit -m "Added authentication"
+oreon status
 
-# Restore a previous version
+oreon commit -m "Implemented feature"
+
+oreon show
+
 oreon restore
+
+oreon createBranch experimental
+
+oreon changeBranch experimental
 ```
 
 ---
 
-## ⚙️ How Oreon Works
+## Current Limitations
 
-Oreon stores repository metadata inside a hidden **`.oreon`** directory.
+The following features are planned for future releases:
 
-Instead of copying the entire project for every commit, Oreon tracks changes between commits while maintaining the latest committed state separately. This enables efficient restoration without replicating Git's architecture.
-
-The internal design is original to Oreon and was built from first principles as an educational implementation of a version control system.
-
----
-
-## 🎯 Why Oreon?
-
-Most developers use Git every day but rarely explore how a version control system actually works.
-
-Oreon was built to bridge that gap by implementing core concepts such as:
-
-- Repository initialization
-- Commit history
-- Change detection
-- File restoration
-- Snapshot management
-
-—all in pure Python.
+- File diff support
+- Merge functionality
+- Branch deletion
+- Ignore file support (`.oreonignore`)
+- Remote repositories
+- Tags
 
 ---
 
-## 🛣️ Roadmap
+## Why Oreon?
 
-- [ ] `.oreonignore` support
-- [ ] Branching
-- [ ] Merge support
-- [ ] Commit diff viewer
-- [ ] Compression
-- [ ] Performance optimizations
+Oreon was built as a learning project to explore how version control systems work internally. Rather than wrapping Git, it implements its own repository format, commit storage, restoration logic, and branching mechanism from the ground up.
 
 ---
 
-## 📄 License
+## Contributing
 
-Released under the **MIT License**.
+Contributions, suggestions, bug reports, and feature requests are welcome. Feel free to open an issue or submit a pull request.
 
 ---
 
-**⭐ If you find Oreon interesting, consider starring the repository!**
+## License
+
+MIT License.
+
+---
+
+## Author
+
+**Pranay Sehgal**
+
+GitHub: https://github.com/PranaySehgal
