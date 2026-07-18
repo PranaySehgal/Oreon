@@ -2,23 +2,27 @@ from .showCommits import showCommits
 from uuid import UUID
 from pathlib import Path
 from json import loads
-def oreonShow(directory:list,x:int):
-    commit_uuid = directory[x-1]
-    commit_changes = directory[x-2]
-    f = open(str(Path.cwd() / '.oreon' / 'commits' / commit_changes / 'changes' / 'changes.json'),'r')
-    d=loads(f.read())
+def oreonShow(x:int):
+    f = open(Path.cwd() / '.oreon' / 'metadata.json','r')
+    d=loads(f.read())['branches']
     f.close()
-    f = open(str(Path.cwd() / '.oreon' / 'commits' / commit_uuid / 'changes' / 'metadata.json'),'r')
+    for i in d:
+        if int(x)<=d[i][-1]:
+            break
+    f = open(Path.cwd() / '.oreon' / 'commits' / i / str(x) / 'changes' / 'metadata.json','r')
     metadata=loads(f.read())
     f.close()
-    print("""COMMIT 3
+    print("""COMMIT {0}
 ────────────────────────
 
-Message : {0}
-""".format(metadata['Message']))
+Message : {1}
+""".format(x,metadata['Message']))
     added=[]
     deleted=[]
     modified=[]
+    f = open(Path.cwd() / '.oreon' / 'commits' / i / str(x) / 'changes' / 'changes.json','r')
+    d=loads(f.read())
+    f.close()
     for i in d:
         if d[i][-1] =='added':
             added.append(d[i][0])
