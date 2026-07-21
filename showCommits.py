@@ -1,4 +1,4 @@
-import os,shutil
+import os
 from json import loads
 from pathlib import Path
 import tabulate
@@ -9,7 +9,7 @@ def showCommits():
     d = loads(f.read())
     f.close()
     index=1
-    metadata=[['Serial Number','Message','Date Created']]
+    metadata=[['Serial Number','Message','Date Created','Branch','Author']]
     for i in d['branches']:
         l = os.listdir(f"{path}/.oreon/commits/{i}")
         for j in l:
@@ -17,7 +17,7 @@ def showCommits():
             data=file.read()
             data = loads(data)
             file.close()
-            metadata.append([index,data['Message']  if data['Message'] else "No Commit Message",data['Date_Created']])
+            metadata.append([index,data['Message']  if data['Message'] else "No Commit Message",data['Date_Created'],i,data['Author']])
             index+=1
     print(tabulate.tabulate(metadata,tablefmt="fancy_grid"))
     length= len(metadata)-1

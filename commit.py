@@ -1,5 +1,5 @@
 from pathlib import Path
-import os,json
+import getpass,json
 import shutil
 import datetime
 from .checkHash import checkHash
@@ -37,6 +37,7 @@ def commitData(message):
     f.close()
     f=open(path+f'\\.oreon\\commits\\{cur_branch}\\{dir_name}\\changes\\metadata.json','w')
     f.write(json.dumps({
+        "Author":getpass.getuser(),
         "Message":message,
         "Date_Created":str(datetime.datetime.now())
     }))

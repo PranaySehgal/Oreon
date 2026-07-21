@@ -1,4 +1,6 @@
 import argparse
+from .renameBranch import *
+from .printBranches import printBranches
 from time import sleep
 from pathlib import Path
 from .__init__ import __init__
@@ -19,15 +21,20 @@ def main():
     subparser = parser.add_subparsers(dest="command",required=True)
     init = subparser.add_parser("init")
     commit = subparser.add_parser("commit")
-    subparser.add_parser("restore")
+    restore=subparser.add_parser("restore")
+    restore.add_argument("--preview",action='store_true',help="Preview changes without applying them.")
     commit.add_argument("-m", "--message", required=False)
     changeBranch = subparser.add_parser("changeBranch")
     changeBranch.add_argument("branch_name")
     createBranch = subparser.add_parser("createBranch")
     createBranch.add_argument("branch_name")
     init.add_argument("path",default='.')
-    parser.add_argument("--version", action="version", version="Oreon 0.1.0")
+    parser.add_argument("--version", action="version", version="Oreon 1.2.0")
+    renameBranchOreon = subparser.add_parser("renameBranch")
+    renameBranchOreon.add_argument("branch1")
+    renameBranchOreon.add_argument("branch2")
     subparser.add_parser("info")
+    subparser.add_parser("branches")
     subparser.add_parser("status")
     subparser.add_parser("show")
     args = parser.parse_args()
@@ -54,7 +61,7 @@ def main():
             print("Invalid Input")
             return
         else:
-            restoreCommit(x)
+            restoreCommit(x,args.preview)
     elif args.command=='info':
         if not checkExistence():
             return
@@ -84,4 +91,14 @@ def main():
             return
         createNewBranch(args.branch_name)
         pass
+    elif args.command=='branches':
+        printBranches()
+    elif args.command=='branches':
+        if not checkExistence():
+            return
+        printBranches()
     
+    elif args.command=='renameBranch':
+        if not checkExistence():
+            return
+        renameBranch(args.branch1,args.branch2)

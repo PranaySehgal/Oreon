@@ -2,6 +2,7 @@ from pathlib import Path
 from json import loads,dumps
 import shutil,os
 from .checkHash import  checkHash
+from time import sleep
 def restore(commit_num,branches):
     for i in branches:
         if commit_num<=branches[i][-1]:
@@ -16,7 +17,9 @@ def restore(commit_num,branches):
         else:
             if Path(str(Path.cwd())+"\\"+changes[j][0]).exists():
                 os.remove(str(Path.cwd())+"\\"+changes[j][0])
-def restoreCommit(x):
+def restoreCommit(x,preview=False):
+    if preview:
+        shutil.copytree(Path.cwd(),Path.cwd()/'.oreon'/'Recovery',ignore=shutil.ignore_patterns(".oreon"))
     for i in Path.cwd().iterdir():
         if i.name=='.oreon':
             continue
@@ -31,6 +34,23 @@ def restoreCommit(x):
     while cur_commit>int(x):
         restore(cur_commit,d['branches'])
         cur_commit-=1
+    if preview:
+        x=input("Hey! We have restored the commit According to your will. It will stay in your parent directory for a specific period and will be changed to the original data after that. Kindly enter the time for which you want to keep this data (In Seconds)")
+        if not x.isdigit():
+            print("Invalid Input.  Restoring Original Repo Immediately")
+        else:
+            sleep(float(x))
+        for i in Path.cwd().iterdir():
+            if i.name=='.oreon':
+                continue
+            elif i.is_file():
+                i.unlink()
+            else:
+                shutil.rmtree(i)
+        
+        shutil.copytree(Path.cwd()/'.oreon'/'Recovery',Path.cwd(),dirs_exist_ok=True)
+        shutil.rmtree(Path.cwd()/'.oreon'/'Recovery')
+        
     data = checkHash()[1]
     f=open(str(Path.cwd())+"\\.oreon\\hashes.json",'w')
     f.write(dumps(data))
