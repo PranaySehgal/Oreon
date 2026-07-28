@@ -1,25 +1,30 @@
 import argparse
-from .renameBranch import *
-from .printBranches import printBranches
-from time import sleep
 from pathlib import Path
+
 from .__init__ import __init__
-from .commit import commitData
 from .changeBranch import changeExistingBranch
-from .showCommits import *
-from .info import oreanInfo
-from .show import oreonShow
+from .commit import commitData
 from .createBranch import createNewBranch
+from .deleteBranch import deleteBranch
+from .ignore import ignore
+from .info import oreanInfo
+from .merge import mergeBranches
+from .printBranches import printBranches
+from .renameBranch import *
+from .restore import restoreCommit
+from .showCommits import *
 from .status import oreanStatus
+
+
 def checkExistence():
         if not Path(str(Path.cwd())+'\\.oreon').exists():
-            print("Oreon Has Not Been Initialised In This Directory")
+            console.print("Oreon Has Not Been initialized In This Directory",style='bold yellow')
             return False
         return True
 def main():
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers(dest="command",required=True)
-    init = subparser.add_parser("init")
+    subparser.add_parser("init")
     commit = subparser.add_parser("commit")
     restore=subparser.add_parser("restore")
     restore.add_argument("--preview",action='store_true',help="Preview changes without applying them.")
@@ -28,7 +33,6 @@ def main():
     changeBranch.add_argument("branch_name")
     createBranch = subparser.add_parser("createBranch")
     createBranch.add_argument("branch_name")
-    init.add_argument("path",default='.')
     parser.add_argument("--version", action="version", version="Oreon 1.2.0")
     renameBranchOreon = subparser.add_parser("renameBranch")
     renameBranchOreon.add_argument("branch1")
@@ -37,16 +41,19 @@ def main():
     subparser.add_parser("branches")
     subparser.add_parser("status")
     subparser.add_parser("show")
+    merge = subparser.add_parser("merge")
+    merge.add_argument("parent")
+    merge.add_argument("child")
+    delete = subparser.add_parser("delete")
+    delete.add_argument("branchName")
+    subparser.add_parser("editIgnore")
     args = parser.parse_args()
-    if args.command=='init' and not Path(str(Path.cwd())+parser.parse_args().path).exists():
-        print("Sorry, The Path You Mentioned Does Not Exist")
-        sleep(2)
-        return main()
-    elif args.command=='init':
+    
+    if args.command=='init':
         if Path(str(Path.cwd())+'\\.oreon').exists():
-            print("Oreon Has Already Been Initialised In This Directory")
+            console.print("Oreon Has Already Been Initialized In This Directory",style='bold yellow')
             return
-        path = str(Path.cwd())+parser.parse_args().path
+        path = str(Path.cwd())
         __init__(path=path)
     elif args.command == 'commit':
         if not checkExistence():
@@ -55,13 +62,8 @@ def main():
     elif args.command=='restore':
         if not checkExistence():
             return
-        length=showCommits()
-        x=input("Enter the serial number of the commit you want to restore....")
-        if not x.isdigit() or int(x)>length or int(x)<1:
-            print("Invalid Input")
-            return
-        else:
-            restoreCommit(x,args.preview)
+        x=showCommits('restore')
+        restoreCommit(x,args.preview)
     elif args.command=='info':
         if not checkExistence():
             return
@@ -73,24 +75,18 @@ def main():
     elif args.command== 'show':
         if not checkExistence():
             return
-        length=showCommits()
-        x=input("Enter the serial number of the commit you want to view....")
-        if not x.isdigit() or int(x)>length or int(x)<1:
-            print("Invalid Input")
-            return
-        else:
-            oreonShow(x)
+        showCommits('show')
     elif args.command=='changeBranch':
         if not checkExistence():
             return
         changeExistingBranch(args.branch_name)
-        pass
+        
     
     elif args.command=='createBranch':
         if not checkExistence():
             return
         createNewBranch(args.branch_name)
-        pass
+        
     elif args.command=='branches':
         printBranches()
     elif args.command=='branches':
@@ -102,3 +98,14 @@ def main():
         if not checkExistence():
             return
         renameBranch(args.branch1,args.branch2)
+    
+    elif args.command=='merge':
+        if not checkExistence():
+            return
+        mergeBranches(args.parent,args.child)
+    elif args.command=='delete':
+        if not checkExistence():
+            return
+        deleteBranch(args.branchName)
+    elif args.command=='editIgnore':
+        ignore()

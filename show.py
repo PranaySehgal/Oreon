@@ -1,35 +1,37 @@
-from .showCommits import showCommits
 from uuid import UUID
 from pathlib import Path
 from json import loads
-def oreonShow(x:int):
-    f = open(Path.cwd() / '.oreon' / 'metadata.json','r')
-    d=loads(f.read())['branches']
+from rich.console import Console
+console = Console()
+def oreonShow(branch,x):
+    f = open(Path.cwd() / '.oreon' / 'branches.json','r')
+    d=loads(f.read())
     f.close()
-    for i in d:
-        if int(x)<=d[i][-1]:
-            break
-    f = open(Path.cwd() / '.oreon' / 'commits' / i / str(x) / 'changes' / 'metadata.json','r')
+    
+    f = open(Path.cwd() / '.oreon' / 'commits' / branch / str(x) / 'changes' / 'metadata.json','r')
     metadata=loads(f.read())
     f.close()
-    print("""COMMIT {0}
+    console.print("""COMMIT {0}
 ────────────────────────
 
 Message : {1}
-""".format(x,metadata['Message']))
+""".format(x,metadata['Message']),style='bold green')
     added=[]
     deleted=[]
     modified=[]
-    f = open(Path.cwd() / '.oreon' / 'commits' / i / str(x) / 'changes' / 'changes.json','r')
+    f = open(Path.cwd() / '.oreon' / 'commits' / branch / str(x) / 'changes' / 'changes.json','r')
     d=loads(f.read())
     f.close()
     for i in d:
-        if d[i][-1] =='added':
-            added.append(d[i][0])
-        elif d[i][-1] =='updated':
-            modified.append(d[i][0])
-        elif d[i][-1] =='deleted':
-            deleted.append(d[i][0])
+        if i=='added':
+            for j in d[i]:
+                added.append(j)
+        if i=='updated':
+            for j in d[i]:
+                modified.append(j)
+        if i=='deleted':
+            for j in d[i]:
+                deleted.append(j)
     if added:
         added.insert(0,"Added")
     
@@ -41,16 +43,16 @@ Message : {1}
     
     for i in range(len(added)):
         if i==0:
-            print(added[0])
+            console.print(added[0],style='bold green')
             continue
-        print("*\t",added[i])
+        console.print("*\t"+added[i],style='bold green')
     for i in range(len(modified)):
         if i==0:
-            print(modified[0])
+            console.print(modified[0],style='bold green')
             continue
-        print("*\t",modified[i])
+        console.print("*\t"+modified[i],style='bold green')
     for i in range(len(deleted)):
         if i==0:
-            print(deleted[0])
+            console.print(deleted[0],style='bold green')
             continue
-        print("*\t",deleted[i])
+        console.print("*\t"+deleted[i],style='bold green')

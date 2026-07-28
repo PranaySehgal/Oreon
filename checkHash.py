@@ -1,44 +1,48 @@
-import os,hashlib,json
+import hashlib  # noqa: N999
+from json import dumps, loads
 from pathlib import Path
-files = []
-dirs=[]
-def fetchFiles(path):
-    l = os.listdir(path)
-    path+='\\'
-    for i in l: 
-        if Path(path+i).is_file():
-            files.append(path+i) 
-        else:
-            fetchFiles(path+i)
-    
+
+
 def checkHash():
-    path = str(Path.cwd())
-    l = os.listdir(path)
-    path+='\\'
-    for i in l: 
-        if i=='.oreon' or i=='.git':
+    files=[]
+    pathFiles = Path.cwd().rglob("*")
+    with open(Path.cwd()/'.oreon'/'metadata.json') as f:
+        metadata = loads(f.read())
+        ignore = metadata['ignore']
+    for i in pathFiles:
+        source=i.relative_to(Path.cwd())
+        if '.oreon' in str(i) or '.git' in str(i):
             continue
-        if Path(path+i).is_file():
-            files.append((path+i)) 
-        else:
-            dirs.append(path+i)
-    for i in dirs:
-        fetchFiles(i)
-    
+        elif i.is_file() and '.oreon' not in str(i) and '.git' not in str(i):
+            files.append(str(source))
     data = {}
-    f=open(path+"\\.oreon\\hashes.json",'r')
-    for i in files:
-        temp = open(i,'r').read()
-        hash = hashlib.sha256(bytes(temp.encode()))
-        data[str(Path(i).relative_to(Path.cwd()))]=str(hash.hexdigest())
-    prev_data = json.loads(f.read())
-    changes={}
+    with open(Path.cwd()/".oreon"/"hashes.json",'r') as f:
+        prev_data = loads(f.read())
+        for i in files:
+            with open(Path.cwd()/i,'r') as temp:
+                contents = temp.read()
+            if i in ignore and i not in prev_data:
+                continue
+            elif i in ignore:
+                ignore.remove(i)
+            hash = hashlib.sha256(bytes(contents.encode()))
+            data[i]=str(hash.hexdigest())
+        updated=[]
+        deleted=[]
+        added=[]
+    with open(Path.cwd()/'.oreon'/'metadata.json','w') as f:
+        metadata['ignore']=ignore
+        f.write(dumps(metadata))
+    
     for i in prev_data:
         if data.get(i,-90)!=-90 and prev_data[i]!=data[i]:
-            changes[i]=[i,'updated']
+            updated.append(str(i))
         elif prev_data.get(i,-90)!=-90 and data.get(i,-90)==-90:
-            changes[i]=[i,'deleted']
+            if i in ignore:
+                continue       
+            else:
+                deleted.append(str(i))
     for i in data:
         if prev_data.get(i,-90)==-90:
-            changes[i]=[i,'added']
-    return changes,data
+            added.append(str(i))
+    return updated,added,deleted,data

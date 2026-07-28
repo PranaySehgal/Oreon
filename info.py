@@ -1,6 +1,9 @@
 from .checkHash import checkHash
 from pathlib import Path
+from rich.console import Console
+
 import json
+console = Console()
 def oreanInfo():
     changes = checkHash()[0]
     repo = Path.cwd().name
@@ -18,19 +21,13 @@ def oreanInfo():
             total_size = f'{total_size:.2f} {unit}'
             break
         total_size/=1024
+    f = open(Path.cwd() / '.oreon' / 'branches.json','r')
+    d=json.loads(f.read())
+    branches=list(d.keys())
+    f.close()
     f = open(Path.cwd() / '.oreon' / 'metadata.json','r')
     d=json.loads(f.read())
-    x=d['last_commit']
     version = d['version']
-    d=d['branches']
-    f.close()
-    for i in d:
-        if x<=d[i][-1]:
-            break
-    f=open(str(Path.cwd())+f'\\.oreon\\commits\\{i}\\{x}\\changes\\metadata.json')
-    d=json.loads(f.read())
-    message_of_latest_commit=d['Message']
-    date_created=d['Date_Created']
     f.close()
     modified=0
     Added=0
@@ -45,7 +42,7 @@ def oreanInfo():
             Deleted+=1
     if not modified and not Deleted and not Added:
         dirty="Clean"
-    print("""OREON REPOSITORY INFORMATION
+    console.print("""OREON REPOSITORY INFORMATION
 ────────────────────────────────────
 
 Repository        : {0}
@@ -54,20 +51,21 @@ Oreon Version     : {2}
 
 COMMITS
 ────────────────────────────────────
-Total  Files      : {3}
-Latest Commit     : Commit Number: {4}
-Message           : {5}
-Created           : {6}
 
+Total  Files      : {3}
+Branches          : {4}
 WORKING TREE
+
 ────────────────────────────────────
-Tracked Files     : {7}
-Modified          : {8}
-Added             : {9}
-Deleted           : {10}
-Status            : {11}
+
+Tracked Files     : {5}
+Modified          : {6}
+Added             : {7}
+Deleted           : {8}
+Status            : {9}
 
 STORAGE
 ────────────────────────────────────
-Commit Size       : {12}
-Current Branch    : main""".format(repo,path,version,total_num,x,message_of_latest_commit,date_created,total_num,modified,Added,Deleted,dirty,total_size))
+
+Commit Size       : {10}
+Current Branch    : main""".format(repo,path,version,total_num,branches,total_num,modified,Added,Deleted,dirty,total_size),style='bold green')

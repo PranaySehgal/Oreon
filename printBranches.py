@@ -1,10 +1,16 @@
 from pathlib import Path
 from json import loads
+from rich.console import Console
+console = Console()
 def printBranches():
-    f=open(Path.cwd()/'.oreon'/'metadata.json','r')
+    f=open(Path.cwd()/'.oreon'/'branches.json','r')
     d=loads(f.read())
-    for i in d['branches']:
-        if i==d['cur_branch']:
-            print('*  ',i)
+    f.close()
+    f=open(Path.cwd()/'.oreon'/'metadata.json','r')
+    cur_branch=loads(f.read())['cur_branch']
+    f.close()
+    for i in d:
+        if i==cur_branch:
+            console.print('*  ',i,style='bold green')
             continue
-        print("   ",i)
+        console.print("   ",i,style='bold yellow')
