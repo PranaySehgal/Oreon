@@ -45,4 +45,7 @@ def checkHash():
     for i in data:
         if prev_data.get(i,-90)==-90:
             added.append(str(i))
+
+    with open(Path.cwd()/'.oreon'/'hashes.json','w') as f:
+        f.write(dumps(data))
     return updated,added,deleted,data

@@ -1,14 +1,18 @@
 from .checkHash import checkHash
 from pathlib import Path
 from rich.console import Console
+import json
 console = Console()
 def oreanStatus():
     repo = Path.cwd().name
+    with open(Path.cwd() / ".oreon" / "metadata.json", "r", encoding="utf-8") as f:
+        metadata = json.load(f)
+    branch = metadata.get("cur_branch", "main")
     console.print(f"""
           OREON STATUS
 ────────────────────────
 Repository : {repo}
-Branch     : main
+Branch     : {branch}
 """,style='bold green')
     modified=[]
     deleted=[]

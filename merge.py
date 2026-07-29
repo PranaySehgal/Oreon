@@ -40,6 +40,11 @@ def mergeBranches(parent, branchName):
     
     with open(Path.cwd()/'.oreon'/'branches.json') as f:
         d = loads(f.read())
+
+    if branchName not in d or parent not in d:
+        console.print("Invalid Branch Selection",style='bold red')
+        return
+
     branches=d[branchName]['Hierarchy'].split("+")
 
     if d[parent]==d[branchName]:

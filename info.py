@@ -28,6 +28,7 @@ def oreanInfo():
     f = open(Path.cwd() / '.oreon' / 'metadata.json','r')
     d=json.loads(f.read())
     version = d['version']
+    current_branch = d.get('cur_branch', 'main')
     f.close()
     modified=0
     Added=0
@@ -68,4 +69,4 @@ STORAGE
 ────────────────────────────────────
 
 Commit Size       : {10}
-Current Branch    : main""".format(repo,path,version,total_num,branches,total_num,modified,Added,Deleted,dirty,total_size),style='bold green')
+Current Branch    : {11}""".format(repo,path,version,total_num,branches,total_num,modified,Added,Deleted,dirty,total_size,current_branch),style='bold green')
