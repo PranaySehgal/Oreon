@@ -4,238 +4,196 @@ This document explains how Oreon stores repository data internally.
 
 ---
 
-# Repository Directory
+## Repository Directory
 
 Every Oreon repository contains a hidden `.oreon` folder.
 
 Example:
-.oreon/
 
+.oreon/
 ├── branches.json
-├── changes.json
 ├── hashes.json
 ├── metadata.json
-
 ├── commits/
-
 └── latest/
 
+The `.oreon` folder stores repository history, branch metadata, file hashes, and snapshots.
 
 ---
 
-# Root Metadata Files
+## Root Metadata Files
 
-## metadata.json
+### `metadata.json`
 
-Stores repository information.
+Stores repository configuration.
 
-Contains:
-
-- Current branch.
-- Repository version.
-
-## Example: 
-
-### {
-####   "cur_branch":"main",
-####   "version":"2.0.0"
-### }
-
-
----
-
-## branches.json
-
-Stores branch information.
-
-Responsible for:
-
-- Tracking existing branches.
-- Maintaining branch hierarchy.
-
----
-
-## hashes.json
-
-Stores file hashes used for change detection.
-
-It allows Oreon to quickly identify file modifications.
-
----
-
-## changes.json
-
-Stores information about repository changes.
-
-## Example: 
-
-### "Relative File Source":"%HASH%"
-
-
----
-
-# Latest Snapshot
-
-The `latest` directory stores the current repository state.
+Fields:
+- `cur_branch`: active branch name
+- `version`: Oreon version
+- `ignore`: paths excluded from tracking
 
 Example:
 
-latest/
-
-abc.txt
-def.txt
-efg.txt
-
-
-It represents the latest reconstructed version of the project.
+{
+  "cur_branch": "main",
+  "version": "2.0.0",
+  "ignore": []
+}
 
 ---
 
-# Commit Storage
+### `branches.json`
 
-Commits are stored inside:
+Describes all branches and their relationships.
 
-.oreon/commits/
-
-
-Each branch maintains its own commits.
+Each branch entry includes:
+- `Hierarchy`: ancestry chain for the branch
+- `commits`: list of commit numbers on that branch
+- `next_commit`: next commit number to use
+- `last_commit`: most recent commit number
 
 Example:
 
-commits/
-
-main/
-├──1/
-└──2/
-
-master/
-├──1/
-└──base/
-
+{
+  "main": {
+    "Hierarchy": "",
+    "commits": [],
+    "next_commit": 1,
+    "last_commit": null
+  }
+}
 
 ---
 
-# Commit Structure
+### `hashes.json`
 
-A commit stores only changed files.
+Stores SHA-256 hashes for tracked files.
 
-Example:
-1/
+This file is updated whenever Oreon checks the working tree or commits changes.
 
-changes/
+It is used to detect:
+- added files
+- modified files
+- deleted files
 
-├── changes.json
+---
+
+## Latest Snapshot
+
+### `.oreon/latest`
+
+The `latest` directory contains a reconstructed snapshot of the current working tree.
+
+This snapshot mirrors the repository state after the most recent commit.
+
+---
+
+## Commit Storage
+
+Commits are stored under `.oreon/commits/<branch>/<commit_number>/changes`.
+
+Each commit contains:
+- `metadata.json`: author, message, date, random ID
+- `changes.json`: lists of added, updated, and deleted files
+- `src/`: actual contents of changed files
+
+Example structure:
+
+.oreon/commits/main/1/changes/
 ├── metadata.json
+├── changes.json
 └── src/
-└── def.txt
+    ├── file1.txt
+    └── folder/file2.txt
 
-
----
-
-## changes/
-
-Contains:
-
-### metadata.json
-
-Stores commit information.
-
-Includes:
-
-- Commit author.
-- Commit date.
-- Branch information.
-- Commit message.
-## Example:
-
-### {
-####  "Author": "USER",
-####  "Message": "Message",
-####  "Date_Created": "2026-07-25 01:14:09.847674",
-####  "Random_Id": "0a0b246e-8798-11f1-af69-7066557f6ec6"
-### }
-
+Only files that changed in the commit are stored in `src/`.
 
 ---
 
-### changes.json
+## Commit Metadata
 
-Stores which files changed during the commit.
+### `changes/metadata.json`
 
-## Example:
-
-### {
-####  "updated": [],
-####  "added": ["efg.txt"],
-####  "deleted": []
-### }
-
-
----
-
-### Changed Files
-
-Only files affected by the commit are stored.
-
-Unchanged files are not duplicated.
-
----
-
-# Branch Base Snapshot
-
-When a branch is created, Oreon stores a base snapshot.
+Contains commit metadata fields:
+- `Author`
+- `Message`
+- `Date_Created`
+- `Random_Id`
 
 Example:
 
-master/
+{
+  "Author": "user",
+  "Message": "Initial commit",
+  "Date_Created": "2026-07-25 01:14:09.847674",
+  "Random_Id": "0a0b246e-8798-11f1-af69-7066557f6ec6"
+}
 
-base/
+### `changes/changes.json`
 
-abc.txt
-def.txt
+Describes commit changes:
 
-
-The base snapshot represents the state of the project when the branch was created.
-
-It allows:
-
-- Faster restoration.
-- Independent branch reconstruction.
-- Easier merge operations.
+{
+  "updated": [],
+  "added": ["file.txt"],
+  "deleted": []
+}
 
 ---
 
-# Commit Numbering
+## Branch Base Snapshot
+
+When a branch is created, Oreon saves a base snapshot under `.oreon/commits/<branch>/base/changes/src`.
+
+The base snapshot contains the full repository state at branch creation time.
+
+It is used to reconstruct branch state independently of parent commit history.
+
+Example:
+
+.oreon/commits/feature/base/changes/src/
+├── file1.txt
+└── file2.txt
+
+---
+
+## Ignore Behavior
+
+Oreon also uses a `.oreonignore` file in the repository root.
+
+- `editIgnore` reveals `.oreonignore` for editing.
+- On the next commit, Oreon reads `.oreonignore` and saves the ignore list to `metadata.json`.
+- Ignored files are excluded from tracking and hash comparisons.
+
+---
+
+## Commit Numbering
 
 Each branch manages commit numbering independently.
 
 Example:
 
 main:
-
 1
 2
 3
 
-master:
-
+feature:
 1
 2
 
-
-A commit number is unique only inside its branch.
+A commit number is unique only within its branch.
 
 ---
 
-# Storage Philosophy
+## Storage Philosophy
 
 Oreon follows an incremental storage model.
 
 Instead of storing the entire project every time:
+- only changed files are stored
+- metadata describes each change
+- base snapshots provide branch start states
+- latest snapshots represent current state
 
-- Only changed files are stored.
-- Metadata describes each change.
-- Base snapshots provide branch starting points.
-- Latest snapshots represent current state.
-
-This provides a balance between simplicity and storage efficiency.
+This balances simplicity with storage efficiency.

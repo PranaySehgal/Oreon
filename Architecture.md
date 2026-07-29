@@ -2,233 +2,200 @@
 
 ## Overview
 
-Oreon is a lightweight command-line version control system designed to track changes, manage branches, restore previous states, and merge independent development paths.
+Oreon is a lightweight command-line version control system that tracks file changes, manages branches, restores previous states, and merges development paths.
 
-Unlike traditional version control systems that primarily operate by storing commit objects and reconstructing history through patches, Oreon follows a snapshot-based approach combined with incremental storage.
-
-Oreon stores only the files that have changed in each commit while maintaining branch snapshots to efficiently reconstruct repository states.
+It uses a hybrid snapshot/incremental model: only changed files are stored per commit, while branch creation also preserves a full base snapshot and the latest working-state snapshot.
 
 ---
 
-# System Design
+## System Design
 
-Oreon is divided into multiple independent modules. The command-line interface acts as the central controller that connects user commands with internal functionality.
+Oreon is organized into a CLI front end and several command modules.
 
-The general execution flow is:
+- `cli.py` parses user input and routes commands to internal modules.
+- Individual modules implement commit, branch management, merge, restore, status, and other operations.
+- All repository data is stored under a hidden `.oreon` directory.
 
-User Command
-|
-v
-cli.py
-|
-+----------------+
-| |
-v v
-Commit System Branch System
-|
-v
-Storage Layer
+### Command flow
 
-
-`cli.py` acts as the entry point of Oreon. It:
-
-- Parses user commands.
-- Validates provided arguments.
-- Calls the appropriate internal modules.
-- Provides a unified interface for repository operations.
+User command → `cli.py` → operation module → `.oreon` storage update
 
 ---
 
-# Repository Structure
+## Repository Structure
 
-Every Oreon repository contains a hidden `.oreon` directory.
+Every Oreon repository contains a hidden `.oreon` folder.
 
 Example:
 
 .oreon/
-│
 ├── branches.json
-├── changes.json
 ├── hashes.json
 ├── metadata.json
-│
 ├── commits/
-│
 └── latest/
 
-
-The `.oreon` directory stores all information required to maintain version history.
-
----
-
-# Metadata Management
-
-Oreon maintains repository information using metadata files.
-
-## metadata.json
-
-Stores repository-level information.
-
-Includes:
-
-- Current branch
-- Oreon version
-
-## Example: 
-
-### {
-####   "cur_branch":"main",
-####   "version":"2.0.0"
-### }
+The `.oreon` directory stores repository metadata, branch information, hash data, commit metadata, and a reconstructed latest snapshot.
 
 ---
 
-## branches.json
+## Key Metadata Files
 
-Maintains branch information and hierarchy.
+### `metadata.json`
 
-It stores:
+Stores repository-level configuration.
 
-- Existing branches
-- Branch relationships
-- Parent-child structure
-
-This allows Oreon to understand branch dependencies and apply branch restrictions.
-
----
-
-# Hash Based Change Detection
-
-Oreon uses file hashing to detect changes between the current working directory and the previous repository state.
-
-The process:
-
-1. Calculate hashes of current files.
-2. Compare them with stored hashes.
-3. Identify:
-   - Added files
-   - Modified files
-   - Deleted files
-
-The detected differences are then used by commands like:
-
-- `status`
-- `commit`
-- `merge`
-
----
-
-# Commit System
-
-A commit in Oreon does not duplicate the entire project.
-
-Instead, it stores only the files affected by that commit.
+Fields include:
+- `cur_branch`: current active branch
+- `version`: Oreon version
+- `ignore`: list of ignored paths
 
 Example:
-Commit 1:
-src/a.txt
-src/b.txt
 
-Commit 2:
-src/c.txt
+{
+  "cur_branch": "main",
+  "version": "2.0.0",
+  "ignore": []
+}
 
+### `branches.json`
 
-Commit 2 does not store unchanged files from Commit 1.
+Stores branch definitions and relationships.
 
-Each branch maintains its own commit numbering.
+Each branch entry contains:
+- `Hierarchy`: branch ancestry path
+- `commits`: list of commit numbers for the branch
+- `next_commit`: next commit number to assign
+- `last_commit`: most recent commit number
 
 Example:
-main
 
-1
-2
-3
+{
+  "main": {
+    "Hierarchy": "",
+    "commits": [],
+    "next_commit": 1,
+    "last_commit": null
+  }
+}
 
-master
+### `hashes.json`
 
-1
-2
+Stores SHA-256 hashes for tracked files.
 
-
-Commit numbers are independent between branches.
-
----
-
-# Branch System
-
-Oreon supports hierarchical branching.
-
-A branch contains:
-
-- Its own commit history.
-- Its own numbering system.
-- A reference to its parent branch.
-
-When a branch is created:
-
-1. A branch entry is added.
-2. A branch directory is created.
-3. The current project snapshot is copied as the branch base.
-
-The base snapshot allows Oreon to reconstruct branch states without depending entirely on parent history.
+It is used to detect added, modified, and deleted files when running `status`, `commit`, or `merge`.
 
 ---
 
-# Merge System
+## Commit Model
 
-Oreon performs merges by comparing reconstructed snapshots.
+Commits are stored under `.oreon/commits/<branch>/<commit_number>/changes`.
+
+Each commit directory contains:
+- `metadata.json`: commit author, message, date, random ID
+- `changes.json`: lists of added, updated, and deleted files
+- `src/`: actual file contents for changed files
+
+Only files that changed in that commit are stored under `src/`.
+
+Commit numbering is independent per branch.
+
+Example:
+
+main/
+├── 1/
+└── 2/
+
+feature/
+├── 1/
+└── 2/
+
+---
+
+## Branch Model
+
+A branch can be created from the current branch using `createBranch`.
+
+When a new branch is created:
+- A branch entry is added to `branches.json`
+- A new branch directory is created under `.oreon/commits`
+- A `base` snapshot is stored for that branch with all current files
+
+The base snapshot preserves the repository state at branch creation time and enables branch reconstruction independent of parent commits.
+
+---
+
+## Merge Model
+
+Merging compares reconstructed branch snapshots to apply changes.
 
 The merge process:
+1. Validate both branch names and ensure the working tree is clean
+2. Restore the target branch state in a temporary area
+3. Compare changed files between source and destination
+4. Copy non-conflicting changes into the working tree
+5. If a conflict occurs, create temporary conflict directories and prompt the user to choose a resolution
+6. Commit the merged result to the target branch
 
-1. Generate the latest state of both branches.
-2. Compare files between the two snapshots.
-3. Detect conflicting modifications.
-4. Apply non-conflicting changes automatically.
-5. Ask the user to resolve conflicts when necessary.
-
-Oreon compares final states instead of replaying individual commits.
-
----
-
-# Restore System
-
-The restore operation reconstructs the repository state of a selected commit.
-
-The process:
-
-1. Identify the requested commit.
-2. Load the required snapshot information.
-3. Apply stored changes.
-4. Replace the current working directory state.
+Merges are based on final file state rather than replaying every commit.
 
 ---
 
-# Supported Commands
+## Restore Model
+
+The restore operation rebuilds a branch state from its base snapshot and commit history.
+
+`restoreCommit` can run in preview mode, temporarily restoring a commit and then optionally returning the repository to its original state.
+
+---
+
+## CLI Commands
+
+Oreon supports these commands:
+
+- `init`
+- `commit [-m MESSAGE]`
+- `restore [--preview]`
+- `info`
+- `status`
+- `show`
+- `changeBranch <branch_name>`
+- `createBranch <branch_name>`
+- `branches`
+- `renameBranch <old> <new>`
+- `merge <parent> <child>`
+- `delete <branchName>`
+- `editIgnore`
+
+---
+
+## Supported Commands
 
 | Command | Purpose |
 |---|---|
-| init | Initialize an Oreon repository |
-| commit | Create a new commit |
-| restore | Restore a previous state |
-| changeBranch | Switch active branch |
-| createBranch | Create a new branch |
-| renameBranch | Rename an existing branch |
-| info | Display repository information |
-| branches | Display available branches |
-| status | Check repository changes |
-| show | Display commit changes |
-| merge | Merge branches |
-| delete | Delete a branch |
+| `init` | Initialize an Oreon repository |
+| `commit` | Create a new commit |
+| `restore` | Restore a previous state |
+| `changeBranch` | Switch active branch |
+| `createBranch` | Create a new branch |
+| `renameBranch` | Rename an existing branch |
+| `info` | Display repository information |
+| `branches` | Display available branches |
+| `status` | Check repository changes |
+| `show` | Display commit changes |
+| `merge` | Merge branches |
+| `delete` | Delete a branch |
+| `editIgnore` | Reveal and edit ignore rules |
 
 ---
 
-# Design Philosophy
+## Design Philosophy
 
 Oreon focuses on:
 
-- Simple internal architecture.
-- Human-readable storage.
-- Incremental commit storage.
-- Branch independence.
-- Transparent repository management.
+- simple internal architecture
+- human-readable storage
+- incremental commit storage
+- branch independence
+- transparent repository management
 

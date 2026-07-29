@@ -1,30 +1,93 @@
-This is how this application works in this version 2.0.0
+# Oreon Function Reference
 
-Oreon is divided into various pieces which are woven into perfection into by cli.py which is the entry point for this oreon. cli embeds all the functionalities into the command prompt panel and provides necessary arguments so that each function can do the mandatory tasks freely. 
+This is how Oreon works in version 2.0.0.
 
-changeBranch.py changes the current branch by editing metadata.py which stores all the important information regarding the program like the current working branch, version and date the program was initialized.
+Oreon is built around a CLI entry point and modular command files.
 
-checkHash.py matches the current working directory files with previous versions and checks if their hashes have changed, a way of knowing which files have been added , deleted and modified
+## Module responsibilities
 
-commit.py commits the the current change to the directory. it stores which files have changed, added or removed, only copy of these which have been added, changed or removed. It maintains metadata file which stores who, when and in which branch created the commit and message given at the time of making a commit.
+### `cli.py`
+- Entry point for parsing and dispatching commands.
+- Defines subcommands such as `init`, `commit`, `restore`, `info`, `status`, `show`, `changeBranch`, `createBranch`, `branches`, `renameBranch`, `merge`, `delete`, and `editIgnore`.
+- Validates repository existence before executing commands.
 
-createBranch.py creates an entry of given branchName in branches.json file  and creates a folder with that name with mandatory information
+### `__init__.py`
+- Initializes a new Oreon repository.
+- Creates `.oreon` directories and files: `latest`, `commits`, `hashes.json`, `metadata.json`, `branches.json`, and `.oreonignore`.
+- Hides the `.oreon` folder on Windows.
 
-deleteBranch.py deletes the branch from branches.json file and deletes the folders if the branch is a leaf branch. Child branches can't be removed until their leaf branches are deleted. 
+### `changeBranch.py`
+- Switches the active branch by restoring the branch’s latest commit state.
+- Updates `metadata.json` with the new `cur_branch`.
+- Prevents branch switching when uncommitted changes exist.
 
-Info.py gives information about current repository
+### `checkHash.py`
+- Scans repository files and computes SHA-256 hashes.
+- Compares current file hashes with `.oreon/hashes.json`.
+- Detects added, updated, and deleted files.
+- Updates `hashes.json` and maintains the ignore list in `metadata.json`.
 
-merge.py merges the two given commits by creating the latest snapshots of the two branches and comparing them. If any mergeConflict happens the instructions are given to resolve them
+### `commit.py`
+- Commits current changes for the active branch.
+- Stores changed files under `.oreon/commits/<branch>/<commit_number>/changes/src/`.
+- Writes `metadata.json` and `changes.json` for the commit.
+- Rebuilds `.oreon/latest` as the current repository snapshot.
 
-printBranches prints all the branches ever initialized in the repository and marks the current branch.
+### `createBranch.py`
+- Creates a new branch from the current branch.
+- Requires a clean working tree before creating a branch.
+- Adds branch metadata and initializes the branch directory.
+- Saves a full base snapshot for the new branch.
 
-renameBranch changes branches.json file and the folder that stores all the commits in the file
+### `deleteBranch.py`
+- Deletes a branch only when it has no child branches.
+- Removes the branch directory from `.oreon/commits`.
+- Updates `branches.json`.
+- Prevents deletion of the default branch if required.
 
-restore.py restores undoes all the changes and restores to current state.
+### `info.py`
+- Prints repository summary information.
+- Reports branch list, current branch, total commit storage size, and working tree status.
 
-show.py shows which all changes were done in which commit
+### `merge.py`
+- Merges one branch into another using reconstructed snapshots.
+- Requires a clean working tree before merge.
+- Applies non-conflicting changes automatically.
+- Detects file conflicts and prompts the user to resolve them.
+- Commits merged changes to the destination branch.
 
-showCommits.py shows the commit names, branch name, owner name, date_created and message given, in the command shell in a tabular format. Then the  user can easily enter the random uuid of the commit and access the commit changes
+### `printBranches.py`
+- Displays all existing branches.
+- Highlights the active current branch.
 
-status.py shows if the current repo is clean or dirty.
+### `renameBranch.py`
+- Renames a branch in `branches.json`.
+- Updates descendant branch hierarchy references.
+- Renames the branch directory under `.oreon/commits`.
+- Updates `metadata.json` to set the renamed branch as current.
+
+### `restore.py`
+- Reconstructs repository state for a branch at a selected commit.
+- Uses the branch base snapshot and commit deltas.
+- Supports preview mode to temporarily restore and then revert.
+- Updates `.oreon/latest` and `.oreon/hashes.json` after restoration.
+
+### `show.py`
+- Displays commit details.
+- Shows added, modified, and deleted files for the chosen commit.
+
+### `showCommits.py`
+- Lists commits for the current branch in a tabular format.
+- Allows selecting commit UUIDs for viewing or restoration.
+- Returns the commit index for restore actions.
+
+### `status.py`
+- Shows working tree status.
+- Reports added, modified, and deleted files compared to `.oreon/hashes.json`.
+- Indicates whether the working tree is clean or dirty.
+
+### `ignore.py`
+- Reveals `.oreonignore` for editing.
+- Writes the ignore list from metadata into `.oreonignore`.
+- Explains that `.oreonignore` is hidden again on the next commit.
 
