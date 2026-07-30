@@ -44,12 +44,23 @@ def restore(branch,commit_num,ignore):
                     
                     shutil.copy(i/'changes'/'src'/j,Path.cwd()/'.oreon'/'commits'/branch/'temp'/j)
     for i in Path.cwd().rglob("*"):
-        source = str(i.relative_to(Path.cwd()))
+        source = i.relative_to(Path.cwd())
         ignoreFiles = False
         for j in ignore:
-            if str(j) == source:
+            if str(j) == str(source):
                 ignoreFiles=True
                 break
+            elif Path(Path.cwd()/j).is_dir():
+                if str(j) in source.parent:
+                    ignoreFiles=True
+                    break
+            elif '*.' in j:
+                data = j.split("*")
+                file_extension = data[1]
+                file_path = data[0]
+                if  Path(Path.cwd()/file_path)== Path(Path.cwd()/source.parent) and  file_extension==source.suffix:
+                    ignoreFiles=True
+                    break
         if i.name=='.oreon' or ignoreFiles or '.oreon' in str(i):
             continue
         elif i.is_dir():
@@ -75,21 +86,31 @@ def restoreCommit(commit_num,branch=None,preview=False):
         else:
             sleep(float(x))
         for i in Path.cwd().rglob("*"):
-            ignoreFiles=False
             source = i.relative_to(Path.cwd())
+            ignoreFiles = False
             for j in ignore:
-                if str(j)==source:
+                if str(j) == str(source):
                     ignoreFiles=True
                     break
-            if '.oreon' in str(i) or i.name=='.oreon' or ignoreFiles:
+                elif Path(Path.cwd()/j).is_dir():
+                    if str(j) in source.parent:
+                        ignoreFiles=True
+                        break
+                elif '*.' in j:
+                    data = j.split("*")
+                    file_extension = data[1]
+                    file_path = data[0]
+                    if  Path(Path.cwd()/file_path)== Path(Path.cwd()/source.parent) and  file_extension==source.suffix:
+                        ignoreFiles=True
+                        break
+            if i.name=='.oreon' or ignoreFiles or '.oreon' in str(i):
                 continue
-            elif i.is_file():
-                i.unlink()
-            else:
+            elif i.is_dir():
                 shutil.rmtree(i)
-        
-        shutil.copytree(Path.cwd()/'.oreon'/cur_branch/'Recovery',Path.cwd(),dirs_exist_ok=True)
-        shutil.rmtree(Path.cwd()/'.oreon'/cur_branch/'Recovery')
+            elif i.is_file():
+                i.unlink()    
+            shutil.copytree(Path.cwd()/'.oreon'/cur_branch/'Recovery',Path.cwd(),dirs_exist_ok=True)
+            shutil.rmtree(Path.cwd()/'.oreon'/cur_branch/'Recovery')
     
     data = checkHash()[-1]
     with open(str(Path.cwd())+"\\.oreon\\hashes.json",'w') as f: 
