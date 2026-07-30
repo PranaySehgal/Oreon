@@ -6,6 +6,7 @@ from .checkHash import  checkHash
 from time import sleep
 console = Console()
 def restore(branch,commit_num,ignore):
+    print(branch)
     folder = list(Path(Path.cwd()/'.oreon'/'commits'/branch).iterdir())
     if Path(Path.cwd()/'.oreon'/'commits'/branch/'base').exists():
         shutil.copytree(Path.cwd()/'.oreon'/'commits'/branch/'base'/'changes'/'src',Path.cwd()/'.oreon'/'commits'/branch/'temp',ignore=shutil.ignore_patterns("metadata.json"))
@@ -78,13 +79,11 @@ def restoreCommit(commit_num,branch=None,preview=False):
     f.close()
     if preview:
         shutil.copytree(Path.cwd(),Path.cwd()/'.oreon'/cur_branch/'Recovery',ignore=shutil.ignore_patterns(".oreon"))
+    print(cur_branch,branch)
     restore(cur_branch if not branch else branch,commit_num,ignore)
     if preview:
-        x=input("Hey! We have restored the commit According to your will. It will stay in your parent directory for a specific period and will be changed to the original data after that. Kindly enter the time for which you want to keep this data (In Seconds)")
-        if not x.isdigit():
-            console.print("Invalid Input.  Restoring Original Repo Immediately",style='bold red')
-        else:
-            sleep(float(x))
+        input("Hey! We have restored the commit According to your will. It will stay in your parent directory Type Anything to go back to current data")
+        
         for i in Path.cwd().rglob("*"):
             source = i.relative_to(Path.cwd())
             ignoreFiles = False

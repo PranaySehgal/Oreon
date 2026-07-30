@@ -63,7 +63,7 @@ def main():
         if not checkExistence():
             return
         x=showCommits('restore')
-        restoreCommit(x,args.preview)
+        restoreCommit(x,preview=args.preview)
     elif args.command=='info':
         if not checkExistence():
             return
