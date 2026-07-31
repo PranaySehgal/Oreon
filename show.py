@@ -1,37 +1,35 @@
-from uuid import UUID
-from pathlib import Path
 from json import loads
+from pathlib import Path
+
 from rich.console import Console
+
 console = Console()
 def oreonShow(branch,x):
-    f = open(Path.cwd() / '.oreon' / 'branches.json','r')
-    d=loads(f.read())
-    f.close()
+    with open(Path.cwd() / '.oreon' / 'branches.json','r') as f:
+        d=loads(f.read())
     
-    f = open(Path.cwd() / '.oreon' / 'commits' / branch / str(x) / 'changes' / 'metadata.json','r')
-    metadata=loads(f.read())
-    f.close()
-    console.print("""COMMIT {0}
+    with open(Path.cwd() / '.oreon' / 'commits' / branch / str(x) / 'changes' / 'metadata.json','r') as f:
+        metadata=loads(f.read())
+    console.print("""COMMIT {}
 ────────────────────────
 
-Message : {1}
+Message : {}
 """.format(x,metadata['Message']),style='bold green')
     added=[]
     deleted=[]
     modified=[]
-    f = open(Path.cwd() / '.oreon' / 'commits' / branch / str(x) / 'changes' / 'changes.json','r')
-    d=loads(f.read())
-    f.close()
+    with open(Path.cwd() / '.oreon' / 'commits' / branch / str(x) / 'changes' / 'changes.json','r') as f:
+        d=loads(f.read())
     for i in d:
         if i=='added':
             for j in d[i]:
-                added.append(j)
+                added.append(j)  # noqa: PERF402
         if i=='updated':
             for j in d[i]:
-                modified.append(j)
+                modified.append(j)  # noqa: PERF402
         if i=='deleted':
             for j in d[i]:
-                deleted.append(j)
+                deleted.append(j)  # noqa: PERF402
     if added:
         added.insert(0,"Added")
     

@@ -1,25 +1,26 @@
-from json import loads
+from json import loads  # noqa: N999
 from pathlib import Path
+
 import tabulate
-from .show import oreonShow
 from rich.console import Console
+
+from .show import oreonShow
+
 console = Console()
 def showCommits(action):
     path = str(Path.cwd())
-    f=open(Path.cwd()/'.oreon'/'branches.json','r')
-    d = loads(f.read())
-    f.close()
-    f=open(Path.cwd()/'.oreon'/'metadata.json','r')
-    cur_branch = loads(f.read())['cur_branch']
-    f.close()
+    with open(Path.cwd()/'.oreon'/'branches.json','r') as f:
+          d = loads(f.read())
+    with open(Path.cwd()/'.oreon'/'metadata.json','r') as f:
+          cur_branch = loads(f.read())['cur_branch']
     metadata=[['Serial Number','Message','Date Created','Branch','Author']]
     ids = []
     
     l = Path(f"{path}/.oreon/commits/{cur_branch}").iterdir()
     for j in l:
         if j.is_dir():
-            file=open(f"{j}\\changes\\metadata.json")
-            d=file.read()
+            with open(f"{j}\\changes\\metadata.json") as file:
+               d=file.read()
         else:
             continue
         data = loads(d)

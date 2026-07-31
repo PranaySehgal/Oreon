@@ -1,8 +1,10 @@
-from .checkHash import checkHash
+import json
 from pathlib import Path
+
 from rich.console import Console
 
-import json
+from .checkHash import checkHash
+
 console = Console()
 def oreanInfo():
     changes = checkHash()[0]
@@ -21,12 +23,11 @@ def oreanInfo():
             total_size = f'{total_size:.2f} {unit}'
             break
         total_size/=1024
-    f = open(Path.cwd() / '.oreon' / 'branches.json','r')
-    d=json.loads(f.read())
+    with open(Path.cwd() / '.oreon' / 'branches.json','r') as f:
+        d=json.loads(f.read())
     branches=list(d.keys())
-    f.close()
-    f = open(Path.cwd() / '.oreon' / 'metadata.json','r')
-    d=json.loads(f.read())
+    with open(Path.cwd() / '.oreon' / 'metadata.json','r') as f:
+        d=json.loads(f.read())
     version = d['version']
     current_branch = d.get('cur_branch', 'main')
     f.close()
@@ -43,30 +44,30 @@ def oreanInfo():
             Deleted+=1
     if not modified and not Deleted and not Added:
         dirty="Clean"
-    console.print("""OREON REPOSITORY INFORMATION
+    console.print(f"""OREON REPOSITORY INFORMATION
 ────────────────────────────────────
 
-Repository        : {0}
-Root Path         : {1}
-Oreon Version     : {2}
+Repository        : {repo}
+Root Path         : {path}
+Oreon Version     : {version}
 
 COMMITS
 ────────────────────────────────────
 
-Total  Files      : {3}
-Branches          : {4}
+Total  Files      : {total_num}
+Branches          : {branches}
 WORKING TREE
 
 ────────────────────────────────────
 
-Tracked Files     : {5}
-Modified          : {6}
-Added             : {7}
-Deleted           : {8}
-Status            : {9}
+Tracked Files     : {total_num}
+Modified          : {modified}
+Added             : {Added}
+Deleted           : {Deleted}
+Status            : {dirty}
 
 STORAGE
 ────────────────────────────────────
 
-Commit Size       : {10}
-Current Branch    : {11}""".format(repo,path,version,total_num,branches,total_num,modified,Added,Deleted,dirty,total_size,current_branch),style='bold green')
+Commit Size       : {total_size}
+Current Branch    : {current_branch}""",style='bold green')

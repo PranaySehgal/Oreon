@@ -1,11 +1,14 @@
-import shutil
 import os
-from .checkHash import checkHash
-from subprocess import run
-from pathlib import Path
+import shutil
 from json import loads
+from pathlib import Path
+from subprocess import run
 from uuid import uuid1
+
 from rich.console import Console
+
+from .checkHash import checkHash
+
 console = Console()
 def restoreChanges(branchName):
     folder = Path(Path.cwd()/'.oreon'/'commits'/branchName).iterdir()

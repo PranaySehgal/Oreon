@@ -1,9 +1,12 @@
+import os
+import shutil
+from json import dumps, loads
 from pathlib import Path
-from json import loads,dumps
-import shutil,os
+
 from rich.console import Console
-from .checkHash import  checkHash
-from time import sleep
+
+from .checkHash import checkHash
+
 console = Console()
 def restore(branch,commit_num,ignore):
     print(branch)

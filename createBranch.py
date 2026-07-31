@@ -1,11 +1,15 @@
-from pathlib import Path
-from os import mkdir
-from json  import  loads,dumps
-import shutil
-from .checkHash import checkHash
-from getpass import getuser
+import shutil  # noqa: N999
 from datetime import datetime
+from getpass import getuser
+from json import dumps, loads
+from os import mkdir
+from pathlib import Path
+
 from rich.console import Console
+
+from .checkHash import checkHash
+
+
 def createNewBranch(branchName):
     console = Console()
     added,deleted,modified=checkHash()[:-1]
@@ -35,7 +39,7 @@ def createNewBranch(branchName):
         f.write(dumps(
             {
                 "Author":getuser(),
-                "Date_Created":str(datetime.now()),
+                "Date_Created":str(datetime.now()),  # noqa: DTZ005
                 "Message":"Create Branch",
                 "Random_Id":"CB1011"
             }

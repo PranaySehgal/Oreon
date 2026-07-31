@@ -1,4 +1,3 @@
-import os
 
 def __init__():
     pass

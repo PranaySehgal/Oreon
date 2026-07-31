@@ -1,6 +1,8 @@
-from rich.console import Console
-from pathlib import Path
 from json import loads
+from pathlib import Path
+
+from rich.console import Console
+
 console = Console()
 def ignore():
     with open(Path.cwd()/'.oreon'/'metadata.json') as file:

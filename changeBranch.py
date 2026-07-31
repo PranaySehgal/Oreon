@@ -9,13 +9,11 @@ from .restore import restoreCommit
 
 def changeExistingBranch(branchName):
     console = Console()
-    f=open(Path.cwd() / '.oreon' / 'branches.json','r')
-    d=loads(f.read())
-    f.close()
-    f=open(Path.cwd() / '.oreon' / 'metadata.json','r')
-    metadata=loads(f.read())
-    cur_branch=metadata['cur_branch']
-    f.close()
+    with open(Path.cwd() / '.oreon' / 'branches.json','r') as f:
+        d=loads(f.read())
+    with open(Path.cwd() / '.oreon' / 'metadata.json','r') as f:
+        metadata=loads(f.read())
+        cur_branch=metadata['cur_branch']
     updated,added,deleted,_data=checkHash()
     if added or updated or deleted:
         console.print("Un-Committed Changes. Aborting!",style='bold red')
@@ -30,8 +28,7 @@ def changeExistingBranch(branchName):
         restoreCommit(d[branchName]['commits'][-1],branch=branchName)
     else:
         restoreCommit(1,branch=branchName)
-    f=open(Path.cwd() / '.oreon' / 'metadata.json','w')
-    metadata['cur_branch']=branchName
-    f.write(dumps(metadata))
-    f.close()
+    with open(Path.cwd() / '.oreon' / 'metadata.json','w') as f:
+        metadata['cur_branch']=branchName
+        f.write(dumps(metadata))
     console.print(f"Branch Changed from {cur_branch}->{branchName}",style='bold green')

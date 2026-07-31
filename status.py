@@ -1,7 +1,10 @@
-from .checkHash import checkHash
-from pathlib import Path
-from rich.console import Console
 import json
+from pathlib import Path
+
+from rich.console import Console
+
+from .checkHash import checkHash
+
 console = Console()
 def oreanStatus():
     repo = Path.cwd().name
