@@ -1,6 +1,7 @@
 import json
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -30,10 +31,11 @@ def test_merge_requires_clean_worktree(repo):
     createNewBranch("feature")
 
     (repo / "file.txt").write_text("dirty", encoding="utf-8")
-    mergeBranches("main", "feature")
+    with patch("oreon.merge.console.print") as merge_print:
+        mergeBranches("main", "feature")
 
-    branches = json.loads((repo / ".oreon" / "branches.json").read_text(encoding="utf-8"))
-    assert branches["feature"]["Hierarchy"].startswith("main+feature")
+    output = "\n".join(call.args[0] for call in merge_print.call_args_list if call.args)
+    assert "Aborting" in output or "Un-committed" in output
 
 
 def test_cli_accepts_commit_message_argument(monkeypatch, tmp_path):

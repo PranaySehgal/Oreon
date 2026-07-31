@@ -1,6 +1,7 @@
 import json
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -11,8 +12,8 @@ if str(ROOT) not in sys.path:
 from oreon.__init__ import __init__ as initialize_repo
 from oreon.commit import commitData
 from oreon.createBranch import createNewBranch
-from oreon.info import oreanInfo
 from oreon.ignore import ignore
+from oreon.info import oreanInfo
 from oreon.printBranches import printBranches
 from oreon.renameBranch import renameBranch
 from oreon.show import oreonShow
@@ -27,24 +28,38 @@ def repo(tmp_path, monkeypatch):
     return repo_dir
 
 
-def test_print_branches_shows_current_branch(repo):
+def test_print_branches_marks_current_branch(repo):
     createNewBranch("feature")
-    printBranches()
 
-    assert (repo / ".oreon" / "branches.json").exists()
+    with patch("oreon.printBranches.console.print") as print_mock:
+        printBranches()
+
+    rendered = [call.args[1] if len(call.args) > 1 else call.args[0] for call in print_mock.call_args_list]
+    assert "main" in rendered
+    assert "feature" in rendered
+    assert any(call.args[0] == "*  " for call in print_mock.call_args_list if call.args)
 
 
-def test_info_command_runs_without_error(repo):
+def test_info_command_reports_repository_summary(repo):
     (repo / "file.txt").write_text("value", encoding="utf-8")
     commitData("first")
-    oreanInfo()
+
+    with patch("oreon.info.console.print") as info_print:
+        oreanInfo()
+
+    output = "\n".join(call.args[0] for call in info_print.call_args_list if call.args)
+    assert "OREON REPOSITORY INFORMATION" in output
+    assert "Current Branch    : main" in output
 
 
-def test_ignore_writes_oreonignore(repo):
-    (repo / ".oreonignore").write_text("ignored.txt", encoding="utf-8")
+def test_ignore_writes_metadata_entries_to_oreonignore(repo):
+    metadata = json.loads((repo / ".oreon" / "metadata.json").read_text(encoding="utf-8"))
+    metadata["ignore"] = ["ignored.txt", "logs"]
+    (repo / ".oreon" / "metadata.json").write_text(json.dumps(metadata), encoding="utf-8")
+
     ignore()
 
-    assert (repo / ".oreonignore").exists()
+    assert (repo / ".oreonignore").read_text(encoding="utf-8") == "ignored.txtlogs"
 
 
 def test_rename_branch_updates_metadata_and_folder(repo):
@@ -63,4 +78,10 @@ def test_rename_branch_updates_metadata_and_folder(repo):
 def test_show_commit_output_works(repo):
     (repo / "file.txt").write_text("value", encoding="utf-8")
     commitData("first")
-    oreonShow("main", 1)
+
+    with patch("oreon.show.console.print") as show_print:
+        oreonShow("main", 1)
+
+    output = "\n".join(call.args[0] for call in show_print.call_args_list if call.args)
+    assert "COMMIT 1" in output
+    assert "first" in output

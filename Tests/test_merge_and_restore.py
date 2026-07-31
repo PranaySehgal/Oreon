@@ -1,4 +1,3 @@
-import json
 import sys
 from pathlib import Path
 
@@ -10,7 +9,6 @@ if str(ROOT) not in sys.path:
 
 from oreon.__init__ import __init__ as initialize_repo
 from oreon.commit import commitData
-from oreon.createBranch import createNewBranch
 from oreon.restore import restoreCommit
 
 
@@ -35,7 +33,7 @@ def test_restore_commit_rehydrates_previous_state(repo):
     assert (repo / "file.txt").read_text(encoding="utf-8") == "v1"
 
 
-def test_restore_commit_preview_uses_temp_directory(repo, monkeypatch):
+def test_restore_commit_preview_restores_the_original_state(repo, monkeypatch):
     (repo / "file.txt").write_text("v1", encoding="utf-8")
     commitData("first")
 

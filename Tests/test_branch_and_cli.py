@@ -9,10 +9,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from oreon.__init__ import __init__ as initialize_repo
-from oreon.commit import commitData
+from oreon.cli import main
 from oreon.createBranch import createNewBranch
 from oreon.deleteBranch import deleteBranch
-from oreon.cli import main
 
 
 @pytest.fixture
@@ -22,6 +21,16 @@ def repo(tmp_path, monkeypatch):
     monkeypatch.chdir(repo_dir)
     initialize_repo(str(repo_dir))
     return repo_dir
+
+
+def test_create_branch_creates_branch_metadata_and_base_snapshot(repo):
+    createNewBranch("feature")
+
+    branches = json.loads((repo / ".oreon" / "branches.json").read_text(encoding="utf-8"))
+    assert "feature" in branches
+    assert branches["feature"]["commits"] == []
+    assert branches["feature"]["Hierarchy"].startswith("main+feature")
+    assert (repo / ".oreon" / "commits" / "feature" / "base" / "changes" / "metadata.json").exists()
 
 
 def test_delete_branch_rejects_branch_with_children(repo):
@@ -44,6 +53,7 @@ def test_delete_branch_removes_leaf_branch(repo):
 
     branches = json.loads((repo / ".oreon" / "branches.json").read_text(encoding="utf-8"))
     assert "feature" not in branches
+    assert "main" in branches
 
 
 def test_cli_init_command_creates_repo(monkeypatch, tmp_path):
