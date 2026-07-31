@@ -9,7 +9,6 @@ from .checkHash import checkHash
 
 console = Console()
 def restore(branch,commit_num,ignore):
-    print(branch)
     folder = list(Path(Path.cwd()/'.oreon'/'commits'/branch).iterdir())
     if Path(Path.cwd()/'.oreon'/'commits'/branch/'base').exists():
         shutil.copytree(Path.cwd()/'.oreon'/'commits'/branch/'base'/'changes'/'src',Path.cwd()/'.oreon'/'commits'/branch/'temp',ignore=shutil.ignore_patterns("metadata.json"))
@@ -55,14 +54,14 @@ def restore(branch,commit_num,ignore):
                 ignoreFiles=True
                 break
             elif Path(Path.cwd()/j).is_dir():
-                if str(j) in source.parent:
+                if str(Path(Path.cwd()/j)) in str(Path(Path.cwd()/i).parent) and i and j:
                     ignoreFiles=True
                     break
             elif '*.' in j:
-                data = j.split("*")
-                file_extension = data[1]
-                file_path = data[0]
-                if  Path(Path.cwd()/file_path)== Path(Path.cwd()/source.parent) and  file_extension==source.suffix:
+                fileData = j.split("*")
+                file_extension = fileData[1]
+                file_path = fileData[0]
+                if  Path(Path.cwd()/file_path)== Path(Path.cwd()/source.parent) and  file_extension==str(source.suffix):
                     ignoreFiles=True
                     break
         if i.name=='.oreon' or ignoreFiles or '.oreon' in str(i):
@@ -82,7 +81,6 @@ def restoreCommit(commit_num,branch=None,preview=False):
     f.close()
     if preview:
         shutil.copytree(Path.cwd(),Path.cwd()/'.oreon'/cur_branch/'Recovery',ignore=shutil.ignore_patterns(".oreon"))
-    print(cur_branch,branch)
     restore(cur_branch if not branch else branch,commit_num,ignore)
     if preview:
         input("Hey! We have restored the commit According to your will. It will stay in your parent directory Type Anything to go back to current data")
@@ -95,14 +93,14 @@ def restoreCommit(commit_num,branch=None,preview=False):
                     ignoreFiles=True
                     break
                 elif Path(Path.cwd()/j).is_dir():
-                    if str(j) in source.parent:
+                    if str(Path(Path.cwd()/j)) in str(Path(Path.cwd()/i).parent) and i and j:
                         ignoreFiles=True
                         break
                 elif '*.' in j:
-                    data = j.split("*")
-                    file_extension = data[1]
-                    file_path = data[0]
-                    if  Path(Path.cwd()/file_path)== Path(Path.cwd()/source.parent) and  file_extension==source.suffix:
+                    fileData = j.split("*")
+                    file_extension = fileData[1]
+                    file_path = fileData[0]
+                    if  Path(Path.cwd()/file_path)== Path(Path.cwd()/source.parent) and  file_extension==str(source.suffix):
                         ignoreFiles=True
                         break
             if i.name=='.oreon' or ignoreFiles or '.oreon' in str(i):

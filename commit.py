@@ -20,7 +20,7 @@ def commitData(message):
     ignore=d['ignore']
     if Path(path+'/.oreonignore').exists():
         with open(path+'/.oreonignore','r',encoding='UTF-8') as f:
-            ignoreFiles=f.read().split()
+            ignoreFiles=f.read().split('\n')
         ignore=[]
         for i in ignoreFiles:
             ignore.append(str(i))
